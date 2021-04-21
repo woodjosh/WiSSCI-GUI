@@ -1,20 +1,30 @@
+"""
+    stream_nomad.py
+    ----------
+    Defines the class NomadStream, which initializes with the enabled
+    electrodes and binlength
+"""
 import xipppy as xp
 import numpy as np
 import struct
 
 
 class NomadStream:
+    """streams from the nomad"""
     def __init__(self, elecs, binlength):
+        """initialize the nomad"""
         self.elecs = elecs
         self.buffSize = binlength*2  # it gets 2 samples per ms
         self.numActiveChans = len(elecs)
         self.numOutChans = 12          # we can only send 12 channels
 
+    # gets the last binlength msgs.
     def get_msg(self):
+        """gets the last binlength msgs
+            returns in sendable format and printable format"""
         try:
             send_msg = bytearray(26)
             bipolar_data = np.zeros(self.numOutChans, self.buffSize)
-            mav = np.zeros(self.numOutChans)
             # get data from nomad
             data_in = xp.cont_hires(self.buffSize, self.elecs)
             # reshape data into numChans by bufferSize matrix

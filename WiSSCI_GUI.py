@@ -1,7 +1,13 @@
+"""
+    WiSSCI_GUI.py
+    ----------
+    Defines the class WissciGui, which has all functions to create the GUI,
+    connect the logic, and high level functions to interact with the WiSSCI
+"""
 import serial
 import streaming
 import threading
-from PyQt5 import QtWidgets, QtGui, QtCore
+from PyQt5 import QtWidgets, QtGui
 from WiSSCI import Ui_MainWindow
 import serial_WiSSCI
 from LostConnDialog import Ui_Dialog as Form
@@ -22,6 +28,7 @@ class WissciGui(QtWidgets.QMainWindow):
         Note: Never modify "WiSSCI.py" manually.
         """
     def __init__(self):
+        """initialize the gui"""
         super().__init__()
 
         # Create the main window
@@ -58,11 +65,11 @@ class WissciGui(QtWidgets.QMainWindow):
         self.setup_ui_logic()
 
     def setup_ui_logic(self):
-        # Connect buttons, etc to logic
+        """connect buttons, etc to logic"""
         self.ui.ConnectBT_Button.clicked.connect(self.bt_reset)
         self.thread.bool_signal_BTStatus.connect(lambda x: self.bt_update(x))
-        self.thread.str_signal_SentWiSSCI.connect(lambda x: self.write_WiSSCI_sent(x))
-        self.thread.str_signal_RecvdWiSSCI.connect(lambda x: self.write_WiSSCI_recvd(x))
+        self.thread.str_signal_SentWiSSCI.connect(lambda x: self.write_wissci_sent(x))
+        self.thread.str_signal_RecvdWiSSCI.connect(lambda x: self.write_wissci_recvd(x))
         self.ui.ApplyConfig_Button.clicked.connect(self.apply_config)
         self.ui.Parameters_Button.clicked.connect(self.load_config)
         self.ui.OfflineData_Button.clicked.connect(self.start_streaming_offline)
@@ -75,8 +82,8 @@ class WissciGui(QtWidgets.QMainWindow):
         self.ui.OfflineData_Button.setEnabled(False)
         self.ui.StopStreaming_Button.setEnabled(False)
 
-    # start streaming from nomad
     def start_streaming_nomad(self):
+        """start streaming from nomad"""
         self.stop_streaming()
 
         # connect to nomad
@@ -87,8 +94,8 @@ class WissciGui(QtWidgets.QMainWindow):
             self.thread.set_src("nomad")
             self.thread.start()
 
-    # start streaming offline data
     def start_streaming_offline(self):
+        """start streaming offline data"""
         self.stop_streaming()
         # open dialog to allow selection of text file
         dlg = QtWidgets.QFileDialog(directory="Test Data")
@@ -103,22 +110,24 @@ class WissciGui(QtWidgets.QMainWindow):
             self.ui.OfflineData_LED.setPixmap(QtGui.QPixmap(ICON_GREEN_LED))
         else:
             print("no file selected")
-
+        # now that streaming has started, enable the stop streaming button
         self.ui.StopStreaming_Button.setEnabled(True)
 
-    # stop streaming if already streaming
     def stop_streaming(self):
+        """stop streaming if already streaming"""
         if self.thread.isRunning():
             self.thread.stop()
 
         self.ui.OfflineData_LED.setPixmap(QtGui.QPixmap(ICON_RED_LED))
         self.ui.NomadStatus_LED.setPixmap(QtGui.QPixmap(ICON_RED_LED))
 
-    # connect to/reset the bt dongle/see if it connects
     # TODO: periodically check for msgs like "Disconnected"
     # TODO: handle invalid COM port
     def bt_reset(self):
+        """connect to/reset the bt dongle/see if it connects"""
+        # reset the bluetooth dongle with a break command
         serial_WiSSCI.reset_bt(self.ser, self.ui.ComPort_Combo.currentText(), self.lock)
+        # get the response
         msg = serial_WiSSCI.read_bt(self.ser, self.lock)
         if msg == "## Connected!":
             print("connected!")
@@ -129,8 +138,8 @@ class WissciGui(QtWidgets.QMainWindow):
             # open dialog telling us we didn't connect
             self.open_dialog()
 
-    # update the status of bt connection (LED + variable)
     def bt_update(self, connected):
+        """update the status of bt connection (LED + variable)"""
         if connected:
             self.ui.BTStatus_LED.setPixmap(QtGui.QPixmap(ICON_GREEN_LED))
             # enable buttons to start streaming
@@ -147,16 +156,16 @@ class WissciGui(QtWidgets.QMainWindow):
         # enable button only if params are previously loaded
         self.ui.ApplyConfig_Button.setEnabled(self.param_file is not None)
 
-    # write what was sent to the WiSSCI to the appropriate tab
-    def write_WiSSCI_sent(self, msg):
+    def write_wissci_sent(self, msg):
+        """write what was sent to the WiSSCI to the appropriate tab"""
         self.ui.Sent_WiSSCI_text.append(msg)
 
-    # write what was recvd from the WiSSCI to the appropriate tab
-    def write_WiSSCI_recvd(self, msg):
+    def write_wissci_recvd(self, msg):
+        """write what was recvd from the WiSSCI to the appropriate tab"""
         self.ui.Recvd_WiSSCI_text.append(msg)
 
-    # apply loaded configuration file to the connected WiSSCI
     def apply_config(self):
+        """apply loaded configuration file to the connected WiSSCI"""
         try:
             # if polling thread is running, stop it
             self.stop_streaming()
@@ -194,13 +203,13 @@ class WissciGui(QtWidgets.QMainWindow):
             print("Problem applying config\n"
                   "Exception: " + str(e)+"\n")
 
-    # open the disconnect dialog
     def open_disconnect_dialog(self):
+        """open the disconnect dialog"""
         self.dialog.show()
 
-    # load configuration from user input and selected file
     # TODO: implement algorithms other than LDA
     def load_config(self):
+        """load configuration from user input and selected file"""
         dlg = QtWidgets.QFileDialog(directory="Config Files")
         dlg.setFileMode(QtWidgets.QFileDialog.ExistingFile)
         dlg.setNameFilter("Mat files (*.mat)")

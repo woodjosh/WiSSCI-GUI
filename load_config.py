@@ -1,3 +1,9 @@
+"""
+    load_config.py
+    ----------
+    loads lda params from matlab file
+    packs them into a uint8 packet to be sent to the WiSSCI
+"""
 import scipy.io as sio
 import numpy as np
 import struct
