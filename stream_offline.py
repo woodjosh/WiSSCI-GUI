@@ -1,8 +1,16 @@
+"""
+    stream_offline.py
+    ----------
+    Defines the class OfflineStream, which enables streaming data
+    saved into a text file from matlab
+"""
+
 import struct
 import numpy as np
 
 
 class OfflineStream:
+    """streams from a txt file"""
     def __init__(self, filename):
         try:
             self.filename = filename
@@ -15,6 +23,7 @@ class OfflineStream:
                   "Exception: " + str(e) + "\n")
 
     def get_msg(self):
+        """gets next msg from the loaded data"""
         try:
             send_msg = bytearray(26)
             msg = self.lines[self.i]

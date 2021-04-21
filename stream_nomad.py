@@ -1,8 +1,8 @@
 """
     stream_nomad.py
     ----------
-    Defines the class NomadStream, which initializes with the enabled
-    electrodes and binlength
+    Defines the class NomadStream, which enables streaming
+    from the nomad
 """
 import xipppy as xp
 import numpy as np

@@ -117,7 +117,7 @@ class WissciGui(QtWidgets.QMainWindow):
         """stop streaming if already streaming"""
         if self.thread.isRunning():
             self.thread.stop()
-
+        # update LED indicators
         self.ui.OfflineData_LED.setPixmap(QtGui.QPixmap(ICON_RED_LED))
         self.ui.NomadStatus_LED.setPixmap(QtGui.QPixmap(ICON_RED_LED))
 

@@ -36,12 +36,18 @@ def read_bt_timeout(ser, lock, timeout):
     """reads from bt with a user specified timeout"""
     try:
         msg = b''
+        # get starting time
         time1 = datetime.datetime.now()
+        # get incoming msg buffer while we haven't passed timeout
         while (datetime.datetime.now() - time1).total_seconds() < timeout:
             with lock:
                 if ser.in_waiting:
+                    # add waiting bytes to msg
                     msg += ser.read(ser.in_waiting)
+        # decode msg
         msg = msg.decode("utf-8")
+        # remove asterisks to get the actual response
+        # TODO: handle if we don't get both asterisks
         star1 = msg.find('*')
         star2 = msg.find('*', star1+1)
         msg = msg[star1+1:star2]
