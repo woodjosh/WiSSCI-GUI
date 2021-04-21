@@ -10,12 +10,23 @@
     <height>592</height>
    </rect>
   </property>
+  <property name="font">
+   <font>
+    <pointsize>8</pointsize>
+   </font>
+  </property>
   <property name="windowTitle">
-   <string>WiSSCI GUI</string>
+   <string>WiSSCI Connect</string>
   </property>
   <property name="windowIcon">
    <iconset>
     <normaloff>Icons/mechanical-arm.png</normaloff>Icons/mechanical-arm.png</iconset>
+  </property>
+  <property name="iconSize">
+   <size>
+    <width>30</width>
+    <height>30</height>
+   </size>
   </property>
   <property name="toolButtonStyle">
    <enum>Qt::ToolButtonIconOnly</enum>
@@ -1071,7 +1082,7 @@
      <x>0</x>
      <y>0</y>
      <width>875</width>
-     <height>26</height>
+     <height>23</height>
     </rect>
    </property>
   </widget>

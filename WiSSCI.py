@@ -15,9 +15,13 @@ class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(875, 592)
+        font = QtGui.QFont()
+        font.setPointSize(8)
+        MainWindow.setFont(font)
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap("Icons/mechanical-arm.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         MainWindow.setWindowIcon(icon)
+        MainWindow.setIconSize(QtCore.QSize(30, 30))
         MainWindow.setToolButtonStyle(QtCore.Qt.ToolButtonIconOnly)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
@@ -427,7 +431,7 @@ class Ui_MainWindow(object):
         self.DataSrcGrid.addWidget(self.StopStreaming_Button, 2, 0, 1, 1)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 875, 26))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 875, 23))
         self.menubar.setObjectName("menubar")
         MainWindow.setMenuBar(self.menubar)
         self.statusbar = QtWidgets.QStatusBar(MainWindow)
@@ -441,7 +445,7 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "WiSSCI GUI"))
+        MainWindow.setWindowTitle(_translate("MainWindow", "WiSSCI Connect"))
         self.Regressor_Combo.setCurrentText(_translate("MainWindow", "None"))
         self.Regressor_Combo.setItemText(0, _translate("MainWindow", "None"))
         self.ApplyConfig_Button.setText(_translate("MainWindow", "Apply Config"))
