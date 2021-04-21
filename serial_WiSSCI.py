@@ -61,17 +61,13 @@ def read_bt_timeout(ser, lock, timeout):
 def read_bt(ser, lock, timeout_in=10):
     """read a line from bluetooth (timeout defaults to 10 seconds)"""
     ser.timeout = timeout_in
-    try:
-        with lock:
-            reading = ser.readline()
-            if reading == b'':
-                raise Exception("WiSSCI took too long to respond")
-            msg = reading.decode("utf-8")
-            msg = msg.replace("\n", "")
-            return msg
-    except Exception as e:
-        print("Problem reading serial port\n"
-              "Exception: " + str(e)+"\n")
+    with lock:
+        reading = ser.readline()
+        if reading == b'':
+            return ""
+        msg = reading.decode("utf-8")
+        msg = msg.replace("\n", "")
+        return msg
 
 
 def send_bt_msg(ser, lock, msg):

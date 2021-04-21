@@ -169,36 +169,44 @@ class WissciGui(QtWidgets.QMainWindow):
         try:
             # if polling thread is running, stop it
             self.stop_streaming()
-
+            self.ui.StopStreaming_Button.setEnabled(False)
             # send msg to tell WiSSCI to enter config mode
             # TODO: add information to this msg (# channels, type of filter, etc)
             serial_WiSSCI.send_bt_msg(self.ser, self.lock, b'##########################')
             msg = serial_WiSSCI.read_bt(self.ser, self.lock)
 
             # check if config mode has started or not
-            # TODO: recover if config mode isn't started (right now that is undefined)
             if msg == "Config mode started on WiSSCI":
                 print("Entered Config Mode")
+            else:
+                print("Configure mode not started")
+                return
 
             # Check if params has been initialized (via the browse button)
-            # TODO: recover if no params have been selected
             if not np.any(self.params):
                 print("Params file has not been selected")
+                return
 
             # send selected params to the WiSSCI
             serial_WiSSCI.send_bt_msg(self.ser, self.lock, self.params)
 
             # get and print the WiSSCI response (tells errors, etc)
-            # TODO: do something with this rather than just printing
             msg = serial_WiSSCI.read_bt(self.ser, self.lock)
-            print(msg)
+            if msg == "Packet Written to flash":
+                print(msg)
+            else:
+                print(msg)
+                return
 
             # receive msg from WiSSCI telling us it completed
-            # TODO: handle if config mode hasn't stopped
             msg = serial_WiSSCI.read_bt(self.ser, self.lock)
             if msg == "Config mode stopped on WiSSCI":
                 self.ui.ParamsFile_Label.setText("Applied " + self.param_file)
                 print("Stopped Config Mode")
+            else:
+                print("Config mode never stopped")
+                return
+
         except Exception as e:
             print("Problem applying config\n"
                   "Exception: " + str(e)+"\n")
