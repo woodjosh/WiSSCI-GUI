@@ -64,7 +64,6 @@ class WissciGui(QtWidgets.QMainWindow):
 
         # serial comm object for BL654 dongle
         self.ser = serial.Serial()
-        serial_WiSSCI.setup_bt(self.ser, self.ui.ComPort_Combo.currentText(), self.lock)
 
         # Create QThread object to read and process the incoming data
         self.thread = streaming.StreamingThread(ser=self.ser, lock=self.lock, binlength=50)
@@ -75,6 +74,10 @@ class WissciGui(QtWidgets.QMainWindow):
     def setup_ui_logic(self):
         """connect buttons, etc to logic"""
         self.ui.ConnectBT_Button.clicked.connect(self.bt_reset)
+
+        # Connect event from changed serial port combo box
+        self.ui.ComPort_Combo.currentIndexChanged.connect(self.setup_bluetooth_device)
+
         self.thread.bool_signal_BTStatus.connect(lambda x: self.bt_update(x))
         self.thread.str_signal_RecvdWiSSCI.connect(lambda x: self.write_wissci_recvd(x))
         self.ui.ApplyConfig_Button.clicked.connect(self.apply_config)
@@ -93,24 +96,25 @@ class WissciGui(QtWidgets.QMainWindow):
             plot.showAxis('bottom', False)
             plot.showAxis('left', False)
 
-        # start with buttons except connect bluetooth disabled
+        # start with buttons disabled
         self.ui.ApplyConfig_Button.setEnabled(False)
         self.ui.StartNomad_Button.setEnabled(False)
         self.ui.OfflineData_Button.setEnabled(False)
         self.ui.StopStreaming_Button.setEnabled(False)
+        self.ui.ConnectBT_Button.setEnabled(False)
+
+    def setup_bluetooth_device(self):
+        self.stop_streaming()
+        if self.ui.ComPort_Combo.currentText() != "<Select port>":
+            serial_WiSSCI.setup_bt(self.ser, self.ui.ComPort_Combo.currentText(), self.lock)
+            self.ui.ConnectBT_Button.setEnabled(True)
 
     def start_streaming_nomad(self):
         """start streaming from nomad"""
         self.stop_streaming()
-        """
-        # connect to nomad
-        print("Connecting to Nomad . . . ", end=' ')
-        with xp.xipppy_open(True):
-            elecs = xp.list_elec('micro')
-            print("Connected")
-            self.ui.NomadStatus_LED.setPixmap(QtGui.QPixmap(ICON_GREEN_LED)) """
         self.thread.set_src("nomad")
         self.thread.start()
+        self.ui.NomadStatus_LED.setPixmap(QtGui.QPixmap(ICON_GREEN_LED))
 
     def start_streaming_offline(self):
         """start streaming offline data"""

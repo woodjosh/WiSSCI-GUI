@@ -984,6 +984,11 @@
          <pointsize>16</pointsize>
         </font>
        </property>
+       <item>
+        <property name="text">
+         <string>&lt;Select port&gt;</string>
+        </property>
+       </item>
       </widget>
      </item>
     </layout>
