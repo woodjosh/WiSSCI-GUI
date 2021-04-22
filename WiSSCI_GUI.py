@@ -13,7 +13,6 @@ import serial_WiSSCI
 from LostConnDialog import Ui_Dialog as Form
 import load_config
 import numpy as np
-import xipppy as xp
 
 # Define status icons
 ICON_RED_LED = "Icons/led-red-on.png"
@@ -39,6 +38,15 @@ class WissciGui(QtWidgets.QMainWindow):
         self.param_file = None
         # set up the UI
         self.ui.setupUi(self)
+
+        # initialize buffer, plots, and curves
+        self.plot_buffer = [[0 for _ in range(12)] for _ in range(200)]
+        plots = (self.ui.Plot_Layout.itemAt(i).widget() for i in range(self.ui.Plot_Layout.count()))
+        self.plot_curve = []
+        i = 0
+        for plot in plots:
+            self.plot_curve.append(plot.plot(range(200), [row[i] for row in self.plot_buffer]))
+            i = i + 1
 
         # set up the dialog
         self.dialog = QtWidgets.QDialog()
@@ -68,13 +76,22 @@ class WissciGui(QtWidgets.QMainWindow):
         """connect buttons, etc to logic"""
         self.ui.ConnectBT_Button.clicked.connect(self.bt_reset)
         self.thread.bool_signal_BTStatus.connect(lambda x: self.bt_update(x))
-        self.thread.str_signal_SentWiSSCI.connect(lambda x: self.write_wissci_sent(x))
         self.thread.str_signal_RecvdWiSSCI.connect(lambda x: self.write_wissci_recvd(x))
         self.ui.ApplyConfig_Button.clicked.connect(self.apply_config)
         self.ui.Parameters_Button.clicked.connect(self.load_config)
         self.ui.OfflineData_Button.clicked.connect(self.start_streaming_offline)
         self.ui.StartNomad_Button.clicked.connect(self.start_streaming_nomad)
         self.ui.StopStreaming_Button.clicked.connect(self.stop_streaming)
+        self.thread.list_signal_SentWiSSCI.connect(lambda x: self.plot_wissci_sent(x))
+
+        # adjust plot settings
+        plots = (self.ui.Plot_Layout.itemAt(i).widget() for i in range(self.ui.Plot_Layout.count()))
+        for plot in plots:
+            plot.setRange(xRange=(0, 200), yRange=(0, 350))
+            plot.enableAutoRange('xy', False)
+            plot.setMouseEnabled(x=False, y=False)
+            plot.showAxis('bottom', False)
+            plot.showAxis('left', False)
 
         # start with buttons except connect bluetooth disabled
         self.ui.ApplyConfig_Button.setEnabled(False)
@@ -85,14 +102,15 @@ class WissciGui(QtWidgets.QMainWindow):
     def start_streaming_nomad(self):
         """start streaming from nomad"""
         self.stop_streaming()
-
+        """
         # connect to nomad
         print("Connecting to Nomad . . . ", end=' ')
         with xp.xipppy_open(True):
+            elecs = xp.list_elec('micro')
             print("Connected")
-            self.ui.NomadStatus_LED.setPixmap(QtGui.QPixmap(ICON_GREEN_LED))
-            self.thread.set_src("nomad")
-            self.thread.start()
+            self.ui.NomadStatus_LED.setPixmap(QtGui.QPixmap(ICON_GREEN_LED)) """
+        self.thread.set_src("nomad")
+        self.thread.start()
 
     def start_streaming_offline(self):
         """start streaming offline data"""
@@ -136,7 +154,7 @@ class WissciGui(QtWidgets.QMainWindow):
             print("didn't connect!")
             self.bt_update(False)
             # open dialog telling us we didn't connect
-            self.open_dialog()
+            self.open_disconnect_dialog()
 
     def bt_update(self, connected):
         """update the status of bt connection (LED + variable)"""
@@ -156,9 +174,18 @@ class WissciGui(QtWidgets.QMainWindow):
         # enable button only if params are previously loaded
         self.ui.ApplyConfig_Button.setEnabled(self.param_file is not None)
 
-    def write_wissci_sent(self, msg):
-        """write what was sent to the WiSSCI to the appropriate tab"""
-        self.ui.Sent_WiSSCI_text.append(msg)
+    def plot_wissci_sent(self, to_plot):
+        """plot what was sent to the WiSSCI on the channel tabs"""
+        try:
+            self.plot_buffer.remove(self.plot_buffer[0])
+            self.plot_buffer.append(to_plot)
+            i = 0
+            for curve in self.plot_curve:
+                curve.setData(y=[row[i] for row in self.plot_buffer])
+                i = i + 1
+        except Exception as e:
+            print("Problem plotting\n"
+                  "Exception: " + str(e)+"\n")
 
     def write_wissci_recvd(self, msg):
         """write what was recvd from the WiSSCI to the appropriate tab"""

@@ -27,11 +27,12 @@ class OfflineStream:
         try:
             send_msg = bytearray(26)
             msg = self.lines[self.i]
-            to_pack = [np.uint8(int(i)) for i in msg]
-            struct.pack_into(f'{26}B', send_msg, 0, *to_pack)
-            print_msg = ''.join(f'{i} ' for i in msg[2:])
+            to_pack = [np.int16(i) for i in msg]
+            struct.pack_into('2c', send_msg, 0, bytes('-', 'ascii'), bytes('>', 'ascii'))
+            struct.pack_into(f'{12}h', send_msg, 2, *to_pack)
             self.i = self.i + 1
-            return send_msg, print_msg
+            # return values
+            return send_msg, to_pack
         except Exception as e:
             print("Problem getting offline stream msg\n"
                   "Exception: " + str(e) + "\n")

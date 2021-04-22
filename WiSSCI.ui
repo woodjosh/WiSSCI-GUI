@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>875</width>
-    <height>592</height>
+    <height>654</height>
    </rect>
   </property>
   <property name="font">
@@ -38,7 +38,7 @@
       <x>330</x>
       <y>10</y>
       <width>511</width>
-      <height>531</height>
+      <height>591</height>
      </rect>
     </property>
     <property name="palette">
@@ -489,7 +489,7 @@
     <property name="tabBarAutoHide">
      <bool>false</bool>
     </property>
-    <widget class="QWidget" name="DecodeTab">
+    <widget class="QWidget" name="Configure_Tab">
      <attribute name="title">
       <string>Configure Decode</string>
      </attribute>
@@ -854,17 +854,55 @@
     </widget>
     <widget class="QWidget" name="NomadTab">
      <attribute name="title">
-      <string>Sent to WiSSCI</string>
+      <string>MAV Graph</string>
      </attribute>
-     <widget class="QTextBrowser" name="Sent_WiSSCI_text">
+     <widget class="QWidget" name="verticalLayoutWidget">
       <property name="geometry">
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>491</width>
-        <height>501</height>
+        <width>501</width>
+        <height>561</height>
        </rect>
       </property>
+      <layout class="QVBoxLayout" name="Plot_Layout">
+       <item>
+        <widget class="PlotWidget" name="Ch01_Plot" native="true"/>
+       </item>
+       <item>
+        <widget class="PlotWidget" name="Ch02_Plot" native="true"/>
+       </item>
+       <item>
+        <widget class="PlotWidget" name="Ch03_Plot" native="true"/>
+       </item>
+       <item>
+        <widget class="PlotWidget" name="Ch04_Plot" native="true"/>
+       </item>
+       <item>
+        <widget class="PlotWidget" name="Ch05_Plot" native="true"/>
+       </item>
+       <item>
+        <widget class="PlotWidget" name="Ch06_Plot" native="true"/>
+       </item>
+       <item>
+        <widget class="PlotWidget" name="Ch07_Plot" native="true"/>
+       </item>
+       <item>
+        <widget class="PlotWidget" name="Ch08_Plot" native="true"/>
+       </item>
+       <item>
+        <widget class="PlotWidget" name="Ch09_Plot" native="true"/>
+       </item>
+       <item>
+        <widget class="PlotWidget" name="Ch10_Plot" native="true"/>
+       </item>
+       <item>
+        <widget class="PlotWidget" name="Ch11_Plot" native="true"/>
+       </item>
+       <item>
+        <widget class="PlotWidget" name="Ch12_Plot" native="true"/>
+       </item>
+      </layout>
      </widget>
     </widget>
     <widget class="QWidget" name="DecodeTab">
@@ -876,8 +914,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>491</width>
-        <height>501</height>
+        <width>501</width>
+        <height>561</height>
        </rect>
       </property>
      </widget>
@@ -956,15 +994,15 @@
       <x>10</x>
       <y>210</y>
       <width>311</width>
-      <height>176</height>
+      <height>193</height>
      </rect>
     </property>
     <layout class="QGridLayout" name="DataSrcGrid">
      <property name="sizeConstraint">
       <enum>QLayout::SetDefaultConstraint</enum>
      </property>
-     <item row="1" column="0">
-      <widget class="QPushButton" name="OfflineData_Button">
+     <item row="2" column="0">
+      <widget class="QPushButton" name="StopStreaming_Button">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
          <horstretch>0</horstretch>
@@ -983,7 +1021,26 @@
         </font>
        </property>
        <property name="text">
-        <string>Start Offline Data</string>
+        <string>Stop Streaming</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="QLabel" name="OfflineData_LED">
+       <property name="maximumSize">
+        <size>
+         <width>60</width>
+         <height>60</height>
+        </size>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="pixmap">
+        <pixmap>Icons/led-red-on.png</pixmap>
+       </property>
+       <property name="scaledContents">
+        <bool>true</bool>
        </property>
       </widget>
      </item>
@@ -1030,27 +1087,8 @@
        </property>
       </widget>
      </item>
-     <item row="1" column="1">
-      <widget class="QLabel" name="OfflineData_LED">
-       <property name="maximumSize">
-        <size>
-         <width>60</width>
-         <height>60</height>
-        </size>
-       </property>
-       <property name="text">
-        <string/>
-       </property>
-       <property name="pixmap">
-        <pixmap>Icons/led-red-on.png</pixmap>
-       </property>
-       <property name="scaledContents">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="0">
-      <widget class="QPushButton" name="StopStreaming_Button">
+     <item row="1" column="0">
+      <widget class="QPushButton" name="OfflineData_Button">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
          <horstretch>0</horstretch>
@@ -1069,7 +1107,7 @@
         </font>
        </property>
        <property name="text">
-        <string>Stop Streaming</string>
+        <string>Start Offline Data</string>
        </property>
       </widget>
      </item>
@@ -1092,6 +1130,14 @@
    </property>
   </widget>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>PlotWidget</class>
+   <extends>QWidget</extends>
+   <header>pyqtgraph</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

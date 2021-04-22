@@ -14,7 +14,7 @@ class StreamingThread(QtCore.QThread):
     """streams data to the WiSSCI from selected src"""
     # Signals handling the pixmap icon (red or green led) indicating the BT status
     bool_signal_BTStatus = QtCore.pyqtSignal(bool)
-    str_signal_SentWiSSCI = QtCore.pyqtSignal(str)
+    list_signal_SentWiSSCI = QtCore.pyqtSignal(list)
     str_signal_RecvdWiSSCI = QtCore.pyqtSignal(str)
 
     def __init__(self, ser, lock, binlength):
@@ -22,15 +22,21 @@ class StreamingThread(QtCore.QThread):
         self.ser = ser
         self.src = None
         self.offline_filename = None
+        self.elecs = None
         self.lock = lock
         self.binlength = binlength  # in ms
         self._running = False
+        self.streaming_src = None
 
     def set_src(self, src, filename=None):
         """set the src of the data to stream"""
         self.src = src
         if src == "offline":
             self.offline_filename = filename
+            self.streaming_src = stream_offline.OfflineStream(self.offline_filename)
+        elif src == "nomad":
+            # self.elecs = elecs
+            self.streaming_src = stream_nomad.NomadStream(self.binlength)
 
     def stop(self):
         """Stop the running thread gracefully."""
@@ -47,25 +53,25 @@ class StreamingThread(QtCore.QThread):
         self._running = True
 
         # initialize streaming_src to the correct source
+        """
         if self.src == "offline":
             streaming_src = stream_offline.OfflineStream(self.offline_filename)
         elif self.src == "nomad":
-            elecs = xp.list_elec('micro')
-            streaming_src = stream_nomad.NomadStream(elecs, self.binlength)
+            streaming_src = stream_nomad.NomadStream(self.elecs, self.binlength)
         else:
             raise Exception("invalid streaming source")
-
+        """
         # this loop runs until we ask it to stop
         while self._running:
             try:
                 # this is implemented by both source types
                 # future source types should have this fn
-                send_msg, print_msg = streaming_src.get_msg()
+                send_msg, plot_msg = self.streaming_src.get_msg()
 
                 # send the msg to the WiSSCI
                 serial_WiSSCI.send_bt_msg(self.ser, self.lock, send_msg)
                 # send the print version to the scrolling window
-                self.str_signal_SentWiSSCI.emit(print_msg)
+                self.list_signal_SentWiSSCI.emit(plot_msg)
 
                 # get the response from the WiSSCI (with specific timeout)
                 msg = serial_WiSSCI.read_bt_timeout(self.ser, self.lock, self.binlength/1000)
