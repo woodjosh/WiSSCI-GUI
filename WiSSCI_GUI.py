@@ -4,15 +4,17 @@
     Defines the class WissciGui, which has all functions to create the GUI,
     connect the logic, and high level functions to interact with the WiSSCI
 """
-import serial
-import streaming
 import threading
-from PyQt5 import QtWidgets, QtGui
-from WiSSCI import Ui_MainWindow
-import serial_WiSSCI
-from LostConnDialog import Ui_Dialog as Form
-import load_config
+
 import numpy as np
+import serial
+from PyQt5 import QtWidgets, QtGui
+
+import load_config
+import serial_WiSSCI
+import streaming
+from LostConnDialog import Ui_Dialog as Form
+from WiSSCI import Ui_MainWindow
 
 # Define status icons
 ICON_RED_LED = "Icons/led-red-on.png"
@@ -115,6 +117,8 @@ class WissciGui(QtWidgets.QMainWindow):
         self.thread.set_src("nomad")
         self.thread.start()
         self.ui.NomadStatus_LED.setPixmap(QtGui.QPixmap(ICON_GREEN_LED))
+        # now that streaming has started, enable the stop streaming button
+        self.ui.StopStreaming_Button.setEnabled(True)
 
     def start_streaming_offline(self):
         """start streaming offline data"""
