@@ -9,6 +9,7 @@ import threading
 import numpy as np
 import serial
 from PyQt5 import QtWidgets, QtGui
+from datetime import datetime
 
 import load_config
 import serial_WiSSCI
@@ -34,6 +35,10 @@ class WissciGui(QtWidgets.QMainWindow):
 
         # Create the main window
         self.ui = Ui_MainWindow()
+
+        # initialize logging parameters
+        self.logging = False
+        self.logfile = None
 
         # initialize params to be sent to the WiSSCI
         self.params = bytearray(886)
@@ -87,6 +92,8 @@ class WissciGui(QtWidgets.QMainWindow):
         self.ui.OfflineData_Button.clicked.connect(self.start_streaming_offline)
         self.ui.StartNomad_Button.clicked.connect(self.start_streaming_nomad)
         self.ui.StopStreaming_Button.clicked.connect(self.stop_streaming)
+        self.ui.StartLogging_Button.clicked.connect(self.start_logging)
+        self.ui.StopLogging_Button.clicked.connect(self.stop_logging)
         self.thread.list_signal_SentWiSSCI.connect(lambda x: self.plot_wissci_sent(x))
 
         # adjust plot settings
@@ -164,6 +171,23 @@ class WissciGui(QtWidgets.QMainWindow):
             # open dialog telling us we didn't connect
             self.open_disconnect_dialog()
 
+    def start_logging(self):
+        """start the logging with a new file"""
+        logfilename = datetime.now().strftime("logs/log_%Y_%m_%d-%I_%M_%S_%p.csv")
+        self.logfile = open(logfilename, 'x')
+        # write header
+        self.logfile.write("Time, Ch1, Ch2, Ch3, Ch4, Ch5, Ch6, Ch7, Ch8, Ch9, Ch10, Ch11, Ch12, WiSSCI Response\n")
+        # set flags and LED
+        self.logging = True
+        self.ui.Logging_LED.setPixmap(QtGui.QPixmap(ICON_GREEN_LED))
+
+    def stop_logging(self):
+        """stop the logging and close file"""
+        self.logfile.close()
+        # set flags and LED
+        self.logging = False
+        self.ui.Logging_LED.setPixmap(QtGui.QPixmap(ICON_RED_LED))
+
     def bt_update(self, connected):
         """update the status of bt connection (LED + variable)"""
         if connected:
@@ -195,9 +219,17 @@ class WissciGui(QtWidgets.QMainWindow):
             print("Problem plotting\n"
                   "Exception: " + str(e)+"\n")
 
+        if self.logging:
+            self.logfile.write(datetime.now().strftime("%Y_%m_%d-%I_%M_%S_%p,"))
+            for val in to_plot:
+                self.logfile.write(str(val) + ',')
+
     def write_wissci_recvd(self, msg):
         """write what was recvd from the WiSSCI to the appropriate tab"""
         self.ui.Recvd_WiSSCI_text.append(msg)
+
+        if self.logging:
+            self.logfile.write(msg + '\n')
 
     def apply_config(self):
         """apply loaded configuration file to the connected WiSSCI"""
