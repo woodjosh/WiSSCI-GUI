@@ -7,7 +7,7 @@
 import xipppy as xp
 import numpy as np
 import struct
-
+from datetime import datetime
 
 class NomadStream:
     """streams from the nomad"""
@@ -26,7 +26,7 @@ class NomadStream:
         """gets the last binlength msgs
             returns in sendable format and printable format"""
         try:
-            send_msg = bytearray(26)
+            send_msg = bytearray(36)
             bipolar_data = np.zeros((self.numOutChans, self.buffSize))
             # reshape data into numChans by bufferSize matrix
             data = np.reshape(data_in, (self.numActiveChans, self.buffSize))
@@ -44,8 +44,11 @@ class NomadStream:
                 to_pack = [np.int16(i) for i in mav]
                 struct.pack_into('2c', send_msg, 0, bytes('-', 'ascii'), bytes('>', 'ascii'))
                 struct.pack_into(f'{12}h', send_msg, 2, *to_pack)
+
+                time = datetime.now().strftime("%M%S%f,")
+                struct.pack_into('10s', send_msg, 26, time.encode('UTF-8'))
                 # return values
-                return send_msg, to_pack
+                return send_msg, to_pack, time
         except Exception as e:
             print("Problem getting nomad stream msg\n"
                   "Exception: " + str(e) + "\n")

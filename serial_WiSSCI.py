@@ -46,11 +46,6 @@ def read_bt_timeout(ser, lock, timeout):
                     msg += ser.read(ser.in_waiting)
         # decode msg
         msg = msg.decode("utf-8")
-        # remove asterisks to get the actual response
-        # TODO: handle if we don't get both asterisks
-        star1 = msg.find('*')
-        star2 = msg.find('*', star1+1)
-        msg = msg[star1+1:star2]
         return msg
     except Exception as e:
         print("Problem reading serial port w/ timeout\n"

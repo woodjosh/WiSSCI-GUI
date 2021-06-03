@@ -7,6 +7,7 @@
 
 import struct
 import numpy as np
+from datetime import datetime
 
 
 class OfflineStream:
@@ -25,14 +26,17 @@ class OfflineStream:
     def get_msg(self):
         """gets next msg from the loaded data"""
         try:
-            send_msg = bytearray(26)
+            send_msg = bytearray(36)
             msg = self.lines[self.i]
             to_pack = [np.int16(i) for i in msg]
             struct.pack_into('2c', send_msg, 0, bytes('-', 'ascii'), bytes('>', 'ascii'))
             struct.pack_into(f'{12}h', send_msg, 2, *to_pack)
+
+            time = datetime.now().strftime("%M%S%f,")
+            struct.pack_into('10s', send_msg, 26, time.encode('UTF-8'))
             self.i = self.i + 1
             # return values
-            return send_msg, to_pack
+            return send_msg, to_pack, time
         except Exception as e:
             print("Problem getting offline stream msg\n"
                   "Exception: " + str(e) + "\n")

@@ -39,6 +39,7 @@ class WissciGui(QtWidgets.QMainWindow):
         # initialize logging parameters
         self.logging = False
         self.logfile = None
+        self.logstarted = False
 
         # initialize params to be sent to the WiSSCI
         self.params = bytearray(886)
@@ -87,6 +88,7 @@ class WissciGui(QtWidgets.QMainWindow):
 
         self.thread.bool_signal_BTStatus.connect(lambda x: self.bt_update(x))
         self.thread.str_signal_RecvdWiSSCI.connect(lambda x: self.write_wissci_recvd(x))
+        self.thread.str_signal_timeSent.connect(lambda x: self.log_cmp_time(x))
         self.ui.ApplyConfig_Button.clicked.connect(self.apply_config)
         self.ui.Parameters_Button.clicked.connect(self.load_config)
         self.ui.OfflineData_Button.clicked.connect(self.start_streaming_offline)
@@ -95,6 +97,7 @@ class WissciGui(QtWidgets.QMainWindow):
         self.ui.StartLogging_Button.clicked.connect(self.start_logging)
         self.ui.StopLogging_Button.clicked.connect(self.stop_logging)
         self.thread.list_signal_SentWiSSCI.connect(lambda x: self.plot_wissci_sent(x))
+
 
         # adjust plot settings
         plots = (self.ui.Plot_Layout.itemAt(i).widget() for i in range(self.ui.Plot_Layout.count()))
@@ -176,7 +179,7 @@ class WissciGui(QtWidgets.QMainWindow):
         logfilename = datetime.now().strftime("logs/log_%Y_%m_%d-%I_%M_%S_%p.csv")
         self.logfile = open(logfilename, 'x')
         # write header
-        self.logfile.write("Time, Ch1, Ch2, Ch3, Ch4, Ch5, Ch6, Ch7, Ch8, Ch9, Ch10, Ch11, Ch12, WiSSCI Response\n")
+        self.logfile.write("Ch1, Ch2, Ch3, Ch4, Ch5, Ch6, Ch7, Ch8, Ch9, Ch10, Ch11, Ch12, CMP Time (mmssffffff), WiSSCI Time, Decode\n")
         # set flags and LED
         self.logging = True
         self.ui.Logging_LED.setPixmap(QtGui.QPixmap(ICON_GREEN_LED))
@@ -186,6 +189,7 @@ class WissciGui(QtWidgets.QMainWindow):
         self.logfile.close()
         # set flags and LED
         self.logging = False
+        self.logstarted = False
         self.ui.Logging_LED.setPixmap(QtGui.QPixmap(ICON_RED_LED))
 
     def bt_update(self, connected):
@@ -220,16 +224,23 @@ class WissciGui(QtWidgets.QMainWindow):
                   "Exception: " + str(e)+"\n")
 
         if self.logging:
-            self.logfile.write(datetime.now().strftime("%Y_%m_%d-%I_%M_%S_%p,"))
+            self.logstarted = True
             for val in to_plot:
                 self.logfile.write(str(val) + ',')
+
+    def log_cmp_time(self, time):
+        if self.logging and self.logstarted:
+            self.logfile.write(time)
 
     def write_wissci_recvd(self, msg):
         """write what was recvd from the WiSSCI to the appropriate tab"""
         self.ui.Recvd_WiSSCI_text.append(msg)
 
-        if self.logging:
-            self.logfile.write(msg + '\n')
+        if self.logging and self.logstarted:
+            # write the WiSSCI time
+            self.logfile.write(msg[3:13] + ',')
+            # write the decode result
+            self.logfile.write(msg[1] + '\n')
 
     def apply_config(self):
         """apply loaded configuration file to the connected WiSSCI"""
@@ -239,7 +250,7 @@ class WissciGui(QtWidgets.QMainWindow):
             self.ui.StopStreaming_Button.setEnabled(False)
             # send msg to tell WiSSCI to enter config mode
             # TODO: add information to this msg (# channels, type of filter, etc)
-            serial_WiSSCI.send_bt_msg(self.ser, self.lock, b'##########################')
+            serial_WiSSCI.send_bt_msg(self.ser, self.lock, b'####################################')
             msg = serial_WiSSCI.read_bt(self.ser, self.lock)
 
             # check if config mode has started or not

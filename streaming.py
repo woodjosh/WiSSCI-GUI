@@ -16,6 +16,7 @@ class StreamingThread(QtCore.QThread):
     bool_signal_BTStatus = QtCore.pyqtSignal(bool)
     list_signal_SentWiSSCI = QtCore.pyqtSignal(list)
     str_signal_RecvdWiSSCI = QtCore.pyqtSignal(str)
+    str_signal_timeSent = QtCore.pyqtSignal(str)
 
     def __init__(self, ser, lock, binlength):
         super().__init__()
@@ -57,12 +58,13 @@ class StreamingThread(QtCore.QThread):
             # this loop runs until we ask it to stop
             while self._running:
                 try:
-                    send_msg, plot_msg = self.streaming_src.get_msg()
+                    send_msg, plot_msg, time_msg = self.streaming_src.get_msg()
 
                     # send the msg to the WiSSCI
                     serial_WiSSCI.send_bt_msg(self.ser, self.lock, send_msg)
                     # send the print version to the scrolling window
                     self.list_signal_SentWiSSCI.emit(plot_msg)
+                    self.str_signal_timeSent.emit(time_msg)
 
                     # get the response from the WiSSCI (with specific timeout)
                     msg = serial_WiSSCI.read_bt_timeout(self.ser, self.lock, self.binlength / 1000)
