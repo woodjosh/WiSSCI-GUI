@@ -8,6 +8,7 @@ import serial_WiSSCI
 import stream_offline
 import stream_nomad
 import xipppy as xp
+from contextlib import ExitStack
 
 
 class StreamingThread(QtCore.QThread):
@@ -53,69 +54,45 @@ class StreamingThread(QtCore.QThread):
         print("Starting Streaming thread from " + self.src + "...")
         self._running = True
 
-        # initialize streaming_src to the correct source
-        if self.src == "offline":
-            # this loop runs until we ask it to stop
-            while self._running:
-                try:
+        with ExitStack() as stack:
+            if self.src == "nomad":
+                stack.enter_context(xp.xipppy_open(True))
+
+        # this loop runs until we ask it to stop
+        while self._running:
+            try:
+                if self.src == "nomad":
+                    # get data from nomad
+                    elecs = xp.list_elec('micro')
+                    data_in, _ = xp.cont_hires(2 * self.binlength, elecs)
+                    send_msg, plot_msg, time_msg = self.streaming_src.get_msg(data_in)
+                elif self.src == "offline":
                     send_msg, plot_msg, time_msg = self.streaming_src.get_msg()
+                else:
+                    raise Exception("invalid streaming source")
 
-                    # send the msg to the WiSSCI
-                    serial_WiSSCI.send_bt_msg(self.ser, self.lock, send_msg)
-                    # send the print version to the scrolling window
-                    self.list_signal_SentWiSSCI.emit(plot_msg)
-                    self.str_signal_timeSent.emit(time_msg)
+                # send the msg to the WiSSCI
+                serial_WiSSCI.send_bt_msg(self.ser, self.lock, send_msg)
+                # send the print version to the scrolling window
+                self.list_signal_SentWiSSCI.emit(plot_msg)
+                # send the time message to be logged
+                self.str_signal_timeSent.emit(time_msg)
 
-                    # get the response from the WiSSCI (with specific timeout)
-                    msg = serial_WiSSCI.read_bt_timeout(self.ser, self.lock, self.binlength / 1000)
-                    if msg == "":
-                        # no message was received in time
-                        self.str_signal_RecvdWiSSCI.emit("dropped packet")
-                        serial_WiSSCI.flush_bt_buffers(self.ser, self.lock)
-                    elif "## Disconnected!" in msg:
-                        # bluetooth was disconnected
-                        self.stop()
-                        self.bool_signal_BTStatus.emit(False)
-                    else:
-                        # we got a valid response
-                        self.str_signal_RecvdWiSSCI.emit(msg)
-                        continue
+                # get the response from the WiSSCI (with specific timeout)
+                msg = serial_WiSSCI.read_bt_timeout(self.ser, self.lock, self.binlength / 1000)
+                if msg == "":
+                    # no message was received in time
+                    self.str_signal_RecvdWiSSCI.emit("dropped packet")
+                    serial_WiSSCI.flush_bt_buffers(self.ser, self.lock)
+                elif "## Disconnected!" in msg:
+                    # bluetooth was disconnected
+                    self.stop()
+                    self.bool_signal_BTStatus.emit(False)
+                else:
+                    # we got a valid response
+                    self.str_signal_RecvdWiSSCI.emit(msg)
+                    continue
 
-                except Exception as e:
-                    print("Problem in streaming thread\n"
-                          "Exception: " + str(e) + "\n")
-        elif self.src == "nomad":
-            # this loop runs until we ask it to stop
-            with xp.xipppy_open(True):
-                while self._running:
-                    try:
-                        # get data from nomad
-                        elecs = xp.list_elec('micro')
-                        data_in, _ = xp.cont_hires(2 * self.binlength, elecs)
-                        send_msg, plot_msg = self.streaming_src.get_msg(data_in)
-
-                        # send the msg to the WiSSCI
-                        serial_WiSSCI.send_bt_msg(self.ser, self.lock, send_msg)
-                        # send the print version to the scrolling window
-                        self.list_signal_SentWiSSCI.emit(plot_msg)
-
-                        # get the response from the WiSSCI (with specific timeout)
-                        msg = serial_WiSSCI.read_bt_timeout(self.ser, self.lock, self.binlength / 1000)
-                        if msg == "":
-                            # no message was received in time
-                            self.str_signal_RecvdWiSSCI.emit("dropped packet")
-                            serial_WiSSCI.flush_bt_buffers(self.ser, self.lock)
-                        elif "## Disconnected!" in msg:
-                            # bluetooth was disconnected
-                            self.stop()
-                            self.bool_signal_BTStatus.emit(False)
-                        else:
-                            # we got a valid response
-                            self.str_signal_RecvdWiSSCI.emit(msg)
-                            continue
-
-                    except Exception as e:
-                        print("Problem in streaming thread\n"
-                              "Exception: " + str(e) + "\n")
-        else:
-            raise Exception("invalid streaming source")
+            except Exception as e:
+                print("Problem in streaming thread\n"
+                      "Exception: " + str(e) + "\n")

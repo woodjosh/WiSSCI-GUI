@@ -98,7 +98,6 @@ class WissciGui(QtWidgets.QMainWindow):
         self.ui.StopLogging_Button.clicked.connect(self.stop_logging)
         self.thread.list_signal_SentWiSSCI.connect(lambda x: self.plot_wissci_sent(x))
 
-
         # adjust plot settings
         plots = (self.ui.Plot_Layout.itemAt(i).widget() for i in range(self.ui.Plot_Layout.count()))
         for plot in plots:
@@ -171,8 +170,6 @@ class WissciGui(QtWidgets.QMainWindow):
         else:
             print("didn't connect!")
             self.bt_update(False)
-            # open dialog telling us we didn't connect
-            self.open_disconnect_dialog()
 
     def start_logging(self):
         """start the logging with a new file"""
