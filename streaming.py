@@ -9,6 +9,8 @@ import stream_offline
 import stream_nomad
 import xipppy as xp
 from contextlib import ExitStack
+from datetime import datetime
+import struct
 
 
 class StreamingThread(QtCore.QThread):
@@ -22,7 +24,7 @@ class StreamingThread(QtCore.QThread):
     def __init__(self, ser, lock, binlength):
         super().__init__()
         self.ser = ser
-        self.src = None
+        self.src = 'dummy'
         self.offline_filename = None
         self.elecs = None
         self.lock = lock
@@ -61,7 +63,16 @@ class StreamingThread(QtCore.QThread):
         # this loop runs until we ask it to stop
         while self._running:
             try:
-                if self.src == "nomad":
+                if self.src == "dummy":
+                    send_msg = bytearray(36)
+                    struct.pack_into('2c', send_msg, 0, bytes('-', 'ascii'), bytes('>', 'ascii'))
+
+                    plot_msg = [0]*12
+                    struct.pack_into(f'{12}h', send_msg, 2, *plot_msg)
+
+                    time_msg = datetime.now().strftime("%M%S%f,")
+                    struct.pack_into('10s', send_msg, 26, time_msg.encode('UTF-8'))
+                elif self.src == "nomad":
                     # get data from nomad
                     elecs = xp.list_elec('micro')
                     data_in, _ = xp.cont_hires(2 * self.binlength, elecs)

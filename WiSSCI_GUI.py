@@ -120,9 +120,14 @@ class WissciGui(QtWidgets.QMainWindow):
             serial_WiSSCI.setup_bt(self.ser, self.ui.ComPort_Combo.currentText(), self.lock)
             self.ui.ConnectBT_Button.setEnabled(True)
 
+    def start_dummy_streaming(self):
+        # set thread src and start thread
+        self.thread.set_src("dummy")
+        self.thread.start()
+
     def start_streaming_nomad(self):
         """start streaming from nomad"""
-        self.stop_streaming()
+        self.thread.stop()
         self.thread.set_src("nomad")
         self.thread.start()
         self.ui.NomadStatus_LED.setPixmap(QtGui.QPixmap(ICON_GREEN_LED))
@@ -131,7 +136,7 @@ class WissciGui(QtWidgets.QMainWindow):
 
     def start_streaming_offline(self):
         """start streaming offline data"""
-        self.stop_streaming()
+        self.thread.stop()
         # open dialog to allow selection of text file
         dlg = QtWidgets.QFileDialog(directory="Test Data")
         dlg.setFileMode(QtWidgets.QFileDialog.ExistingFile)
@@ -152,6 +157,7 @@ class WissciGui(QtWidgets.QMainWindow):
         """stop streaming if already streaming"""
         if self.thread.isRunning():
             self.thread.stop()
+            self.start_dummy_streaming()
         # update LED indicators
         self.ui.OfflineData_LED.setPixmap(QtGui.QPixmap(ICON_RED_LED))
         self.ui.NomadStatus_LED.setPixmap(QtGui.QPixmap(ICON_RED_LED))
@@ -196,6 +202,7 @@ class WissciGui(QtWidgets.QMainWindow):
             # enable buttons to start streaming
             self.ui.StartNomad_Button.setEnabled(True)
             self.ui.OfflineData_Button.setEnabled(True)
+            self.start_dummy_streaming()
         else:
             self.stop_streaming()
             self.ui.BTStatus_LED.setPixmap(QtGui.QPixmap(ICON_RED_LED))
@@ -280,7 +287,8 @@ class WissciGui(QtWidgets.QMainWindow):
                 print("Stopped Config Mode")
             else:
                 print("Config mode never stopped")
-                return
+
+            self.start_dummy_streaming()
 
         except Exception as e:
             print("Problem applying config\n"
